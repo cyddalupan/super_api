@@ -1,24 +1,22 @@
 <?php
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Http\Server\MiddlewareInterface as Middleware;
+use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
 
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Server\MiddlewareInterface;
-use Psr\Http\Server\RequestHandlerInterface;
-
-class CorsMiddleware implements MiddlewareInterface
+class CorsMiddleware implements Middleware
 {
-    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+    public function process(Request $request, RequestHandler $handler): Response
     {
         $response = $handler->handle($request);
 
-        // Allow from any origin (for dev/Codespace; restrict in prod, e.g., 'https://your-angular-domain.com')
         $response = $response
-            ->withHeader('Access-Control-Allow-Origin', '*')
+            ->withHeader('Access-Control-Allow-Origin', '*') // Allow all origins as per your request
+            ->withHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization')
             ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS')
-            ->withHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')  // Add more if needed for applicant auth
-            ->withHeader('Access-Control-Max-Age', '86400');  // Cache preflight for 1 day
+            ->withHeader('Access-Control-Max-Age', '86400')
+            ->withHeader('Access-Control-Allow-Credentials', 'true');
 
-        // Handle preflight OPTIONS requests (required for CORS)
         if ($request->getMethod() === 'OPTIONS') {
             return $response->withStatus(200);
         }
